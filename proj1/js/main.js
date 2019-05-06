@@ -64,7 +64,8 @@ var width = 600 - margin.left - margin.right,
     
         //interval for loops
         d3.interval(function(){
-          update(data);
+          var newData = flag ? data: data.slice(1);
+          update(newData);
           flag = !flag; // switch case of flag
         },1000);
         //running the visualizer for the first time.
@@ -106,16 +107,21 @@ var width = 600 - margin.left - margin.right,
     
         //JOIN new data with old elements
       var rectangles = g.selectAll("rect")
-        .data(data);
+        .data(data,function(d){
+          return d.month;
+        });
     
         //EXIT old elements not present in new data.
         rectangles.exit()
         .attr("fill","red")
-        .trans
+        .transition(trans) // transition inserted
+        .attr("y",y(0))
+        .attr("height",0)
         .remove();
     
-        //UPDATE old elements with present in new data.
-        rectangles.attr("x", function(d){
+        /*//UPDATE old elements with present in new data.
+        rectangles.transition(trans) // transition inserted
+        .attr("x", function(d){
           return x(d.month);
         })
         .attr("y",function(d){
@@ -124,25 +130,27 @@ var width = 600 - margin.left - margin.right,
         .attr("width",x.bandwidth)
         .attr("height",function(d){
           return height -  y(d[value]);
-        });
+        });*/
     
         //ENTER new elements present in new data.
         rectangles.enter()
           .append("rect")
+          .attr("width",x.bandwidth)
+          .attr("fill",function(d){
+            return "green";
+          })
+          // AND UPDATE old elements present in new data
+          .merge(rectangles)
+          .transition(trans) //transition inserted
           .attr("x", function(d){
             return x(d.month);
           })
           .attr("y",function(d){
             return y(d[value]);
           })
-          .attr("width",x.bandwidth)
           .attr("height",function(d){
             return height -  y(d[value]);
-          })
-        .attr("fill",function(d){
-          console.log("filled");
-          return "blue";
-        });
+          });
     
         //set value of label to either revenue or profit
         var label = flag ? "Revenue" : "Profit";
