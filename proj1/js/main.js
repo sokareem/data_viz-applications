@@ -105,7 +105,6 @@ var width = 600 - margin.left - margin.right,
 
         //JOIN new data with old elements
       var rectangles = g.selectAll("rect")
-        .data(data);
         .data(data,function(d){
           return d.month;
         });
