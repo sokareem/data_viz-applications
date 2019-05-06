@@ -3,13 +3,11 @@
 *    Mastering Data Visualization with D3.js
 *    
 */
-
 /*var margin = { left:80, right:20, top:50, bottom:100 };
 var width = 600 - margin.left - margin.right,
 		height = 400 - margin.top - margin.bottom;
 		*/
     var margin = { left:100, right:10, top:10, bottom: 100};
-
     var width = 600 - margin.left - margin.right;
     var height = 500 - margin.top - margin.bottom;
     
@@ -33,13 +31,6 @@ var width = 600 - margin.left - margin.right,
       .attr("class", "y-axis")
       .attr("transform","translate(" + width + ", 0)");
     
-      var x = d3.scaleBand()
-        .range([0,width])
-        .paddingInner(0.3)
-        .paddingOuter(0.3);
-    
-      var y = d3.scaleLinear()
-        .range([height,0]);
     //X Label
     var xLabel = g.append("text")
       .attr("class","x axis-label")
@@ -67,9 +58,10 @@ var width = 600 - margin.left - margin.right,
         d.revenue = +d.revenue; //data for revenue
         d.profit = +d.profit; // data on profit
       });
-    
+
         //interval for loops
         d3.interval(function(){
+          update(data);
           var newData = flag ? data: data.slice(1);
           update(newData);
           flag = !flag; // switch case of flag
@@ -80,14 +72,19 @@ var width = 600 - margin.left - margin.right,
     
     function update(data){
       var value = flag ? "revenue" : "profit"; // ternary operator
-      
-        x.domain(data.map(function(d){
+      var x = d3.scaleBand()
+        .domain(data.map(function(d){
           return d.month ;
         }))
-
-        y.domain([0, d3.max(data,function(d){
+        .range([0,width])
+        .paddingInner(0.3)
+        .paddingOuter(0.3);
+    
+      var y = d3.scaleLinear()
+        .domain([0, d3.max(data,function(d){
           return d[value];
         })])
+        .range([height,0]);
     
         //axis calls
         xAxisCall = d3.axisBottom(x);
@@ -105,39 +102,65 @@ var width = 600 - margin.left - margin.right,
         yAxisGroup.transition(trans).call(yAxisCall); // added transition
     
           //Update protocol
-    
+
         //JOIN new data with old elements
-      var rectangles = g.selectAll("circle")
+      var rectangles = g.selectAll("rect")
+        .data(data);
         .data(data,function(d){
           return d.month;
         });
-    
+
         //EXIT old elements not present in new data.
         rectangles.exit()
         .attr("fill","red")
+        .trans
         .transition(trans) // transition inserted
-        .attr("cy",y(0))
+        .attr("y",y(0))
+        .attr("height",0)
         .remove();
-  
+
+        //UPDATE old elements with present in new data.
+        rectangles.attr("x", function(d){
+        /*//UPDATE old elements with present in new data.
+        rectangles.transition(trans) // transition inserted
+        .attr("x", function(d){
+          return x(d.month);
+        })
+        .attr("y",function(d){
+          return y(d[value]);
+        })
+        .attr("width",x.bandwidth)
+        .attr("height",function(d){
+          return height -  y(d[value]);
+        });
+        });*/
+
         //ENTER new elements present in new data.
         rectangles.enter()
-          .append("circle")
-          .attr("cy",y(0))
-          .attr("cx",function(d){ return x(d.month) + x.bandwidth()/2 })
-          .attr("r",5)
+          .append("rect")
+          .attr("width",x.bandwidth)
           .attr("fill",function(d){
             return "green";
           })
           // AND UPDATE old elements present in new data
           .merge(rectangles)
           .transition(trans) //transition inserted
-          .attr("cx", function(d){
-            return x(d.month) + x.bandwidth() / 2;
+          .attr("x", function(d){
+            return x(d.month);
           })
-          .attr("cy",function(d){
+          .attr("y",function(d){
             return y(d[value]);
+          })
+          .attr("width",x.bandwidth)
+          .attr("height",function(d){
+            return height -  y(d[value]);
+          })
+        .attr("fill",function(d){
+          console.log("filled");
+          return "blue";
+        });
           });
-    
+
         //set value of label to either revenue or profit
         var label = flag ? "Revenue" : "Profit";
         yLabel.text(label);
